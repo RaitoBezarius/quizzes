@@ -18,6 +18,7 @@
  */
 
 namespace Himedia\QCM;
+define('AES_256_CBC', 'aes-256-cbc');
 
 /**
  * Petite classe outils.
@@ -106,22 +107,12 @@ class Tools
     }
 
     public static function simpleEncrypt ($text, $salt) {
-        return trim(base64_encode(mcrypt_encrypt(
-            MCRYPT_RIJNDAEL_256,
-            $salt,
-            $text,
-            MCRYPT_MODE_ECB,
-            mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB), MCRYPT_RAND)
-        )));
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length(AES_256_CBC));
+        return trim(openssl_encrypt($text, AES_256_CBC, $salt, 0, $iv) . ':' . base64_encode($iv));
     }
 
-    public static function simpleDecrypt ($text, $salt) {
-        return trim(mcrypt_decrypt(
-            MCRYPT_RIJNDAEL_256,
-            $salt,
-            base64_decode($text),
-            MCRYPT_MODE_ECB,
-            mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_ECB), MCRYPT_RAND)
-        ));
+    public static function simpleDecrypt ($crypted, $salt) {
+        $parts = explode(':', $encrypted);
+        return trim(openssl_decrypt($parts[0], AES_256_CBC, $salt, 0, base64_decode($parts[1])));
     }
 }
